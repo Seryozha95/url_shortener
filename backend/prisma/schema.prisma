@@ -1,0 +1,54 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and URL ownership
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Stored as salt:hash
+  urls      Url[]    // One-to-many relation with URLs
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@map("users")
+}
+
+// URL model for storing shortened URLs
+model Url {
+  id          String     @id @default(uuid())
+  originalUrl String     @map("original_url")
+  shortSlug   String     @unique @map("short_slug")
+  customSlug  String?    @unique @map("custom_slug")
+  visitCount  Int        @default(0) @map("visit_count")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?    @map("user_id")
+  analytics   Analytics[] // One-to-many relation with analytics
+
+  @@index([shortSlug])
+  @@index([customSlug])
+  @@index([userId])
+  @@map("urls")
+}
+
+// Analytics model for tracking URL visits
+model Analytics {
+  id        String   @id @default(uuid())
+  url       Url      @relation(fields: [urlId], references: [id], onDelete: Cascade)
+  urlId     String   @map("url_id")
+  visitedAt DateTime @default(now()) @map("visited_at")
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  userAgent String?  @map("user_agent") @db.Text
+
+  @@index([urlId])
+  @@index([visitedAt])
+  @@map("analytics")
+} 

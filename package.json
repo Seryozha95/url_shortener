@@ -1,0 +1,14 @@
+{
+  "name": "url-shortener",
+  "version": "1.0.0",
+  "description": "A modern URL shortener service",
+  "scripts": {
+    "start": "docker-compose up",
+    "dev": "docker-compose -f docker-compose.dev.yml up",
+    "build": "docker-compose build",
+    "test": "jest"
+  },
+  "keywords": ["url-shortener", "typescript", "react", "node"],
+  "author": "",
+  "license": "ISC"
+} 
