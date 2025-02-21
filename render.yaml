@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: url-shortener-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/build
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: url-shortener-backend
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: url-shortener-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run prisma:generate && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: url-shortener-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        fromService:
+          type: web
+          name: url-shortener-frontend
+          envVarKey: RENDER_EXTERNAL_URL
+
+databases:
+  - name: url-shortener-db
+    databaseName: urlshortener
+    user: url_shortener 
