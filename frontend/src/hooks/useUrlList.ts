@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { urlApi } from '../services/api';
 import { Url } from '../types/url';
+import { useAuth } from '../contexts/AuthContext';
 
 interface UseUrlListReturn {
   urls: Url[];
@@ -12,11 +13,19 @@ interface UseUrlListReturn {
 }
 
 export const useUrlList = (): UseUrlListReturn => {
+  const { isAuthenticated } = useAuth();
   const [urls, setUrls] = useState<Url[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchUrls = async () => {
+    if (!isAuthenticated) {
+      setUrls([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     try {
       const response = await urlApi.getAll();
       if (response.status === 'success' && response.data) {
@@ -32,6 +41,8 @@ export const useUrlList = (): UseUrlListReturn => {
   };
 
   const deleteUrl = async (id: string) => {
+    if (!isAuthenticated) return;
+    
     try {
       await urlApi.delete(id);
       setUrls(urls.filter(url => url.id !== id));
@@ -41,6 +52,8 @@ export const useUrlList = (): UseUrlListReturn => {
   };
 
   const updateUrl = async (id: string, customSlug: string) => {
+    if (!isAuthenticated) return;
+
     try {
       const response = await urlApi.update(id, customSlug);
       if (response.status === 'success' && response.data) {
@@ -54,13 +67,19 @@ export const useUrlList = (): UseUrlListReturn => {
   };
 
   const refreshUrls = async () => {
-    setLoading(true);
+    if (!isAuthenticated) return;
     await fetchUrls();
   };
 
   useEffect(() => {
-    fetchUrls();
-  }, []);
+    if (isAuthenticated) {
+      fetchUrls();
+    } else {
+      setUrls([]);
+      setLoading(false);
+      setError(null);
+    }
+  }, [isAuthenticated]);
 
   return {
     urls,

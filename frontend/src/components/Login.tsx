@@ -4,14 +4,30 @@ import { useAuth } from '../contexts/AuthContext';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, error } = useAuth();
+  const { login, error: authError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
+
+    // Client-side validation
+    if (!email) {
+      setError('Email is required');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!password) {
+      setError('Password is required');
+      setIsSubmitting(false);
+      return;
+    }
+
     const success = await login({ email, password });
     if (success) {
       navigate('/');
@@ -22,16 +38,20 @@ export const Login: React.FC = () => {
   return (
     <div className="container">
       <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
             id="email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="input"
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(null);
+            }}
+            className={`input ${error && !email ? 'input-error' : ''}`}
+            placeholder="Enter your email"
+            disabled={isSubmitting}
           />
         </div>
 
@@ -41,18 +61,30 @@ export const Login: React.FC = () => {
             id="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="input"
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError(null);
+            }}
+            className={`input ${error && !password ? 'input-error' : ''}`}
+            placeholder="Enter your password"
+            disabled={isSubmitting}
           />
         </div>
 
-        <button type="submit" className="button" disabled={isSubmitting}>
+        <button 
+          type="submit" 
+          className="button" 
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Logging in...' : 'Login'}
         </button>
       </form>
 
-      {error && <div className="error">{error}</div>}
+      {(error || authError) && (
+        <div className="error" role="alert">
+          {error || authError}
+        </div>
+      )}
     </div>
   );
 }; 

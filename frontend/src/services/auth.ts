@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { LoginData, RegisterData, AuthResponse } from '../types/auth';
 
 const api = axios.create({
@@ -16,21 +16,41 @@ api.interceptors.request.use((config) => {
 
 export const authApi = {
   login: async (data: LoginData): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/login', data);
-    if (response.data.status === 'success' && response.data.data) {
-      localStorage.setItem('token', response.data.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+    try {
+      const response = await api.post<AuthResponse>('/auth/login', data);
+      if (response.data.status === 'success' && response.data.data) {
+        localStorage.setItem('token', response.data.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      }
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        return error.response.data as AuthResponse;
+      }
+      return {
+        status: 'error',
+        message: 'Unable to connect to the server. Please try again later.'
+      };
     }
-    return response.data;
   },
 
   register: async (data: RegisterData): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/register', data);
-    if (response.data.status === 'success' && response.data.data) {
-      localStorage.setItem('token', response.data.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+    try {
+      const response = await api.post<AuthResponse>('/auth/register', data);
+      if (response.data.status === 'success' && response.data.data) {
+        localStorage.setItem('token', response.data.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      }
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        return error.response.data as AuthResponse;
+      }
+      return {
+        status: 'error',
+        message: 'Unable to connect to the server. Please try again later.'
+      };
     }
-    return response.data;
   },
 
   logout: () => {
